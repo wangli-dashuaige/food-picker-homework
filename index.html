@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今天吃什么？</title>
+  <style>
+    /* ---------- 基础与主题 ---------- */
+    :root {
+      --bg: #fff7f2;
+      --bg-2: #eef6ff;
+      --card: #ffffff;
+      --ink: #3d3530;
+      --ink-soft: #8a7f78;
+      --line: #f1e6dd;
+      --primary: #ff8a5b;
+      --primary-dark: #f96f3b;
+      --primary-soft: #fff0e8;
+      --ok: #2f9e6f;
+      --warn: #d9812a;
+      --radius-lg: 26px;
+      --radius-md: 16px;
+      --shadow: 0 18px 40px -22px rgba(150, 95, 65, 0.45), 0 2px 8px rgba(150, 95, 65, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      padding: 40px 20px 56px;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 600px at 12% -10%, #ffe7d6 0%, rgba(255, 231, 214, 0) 60%),
+                  radial-gradient(900px 520px at 92% 4%, #dcebff 0%, rgba(220, 235, 255, 0) 62%),
+                  linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      background-attachment: fixed;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ---------- 顶部标题 ---------- */
+    .app__header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .app__kicker {
+      display: inline-block;
+      margin: 0 0 12px;
+      padding: 6px 14px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--primary-dark);
+      background: #fff;
+      border: 1px dashed #ffc9ad;
+      border-radius: 999px;
+    }
+
+    .app__title {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 42px);
+      line-height: 1.25;
+      letter-spacing: 2px;
+      font-weight: 800;
+    }
+
+    .app__subtitle {
+      margin: 10px 0 0;
+      font-size: 15px;
+      color: var(--ink-soft);
+    }
+
+    /* ---------- 通用卡片 ---------- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 26px 26px 24px;
+    }
+
+    .card + .card { margin-top: 18px; }
+
+    .card__title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .card__count {
+      margin-left: auto;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      background: #faf5f1;
+      border-radius: 999px;
+    }
+
+    /* ---------- 抽取结果区 ---------- */
+    .result {
+      text-align: center;
+      background: linear-gradient(180deg, #fff 0%, #fff9f5 100%);
+      padding: 30px 26px 28px;
+    }
+
+    .result__emoji {
+      font-size: 68px;
+      line-height: 1;
+      margin-bottom: 14px;
+      filter: drop-shadow(0 10px 14px rgba(160, 110, 80, 0.18));
+    }
+
+    .result__emoji--pop { animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    @keyframes pop {
+      0%   { transform: scale(0.5) rotate(-12deg); opacity: 0.35; }
+      60%  { transform: scale(1.18) rotate(6deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    .result__label {
+      margin: 0 0 6px;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--ink-soft);
+    }
+
+    .result__food {
+      margin: 0 0 22px;
+      min-height: 46px;
+      font-size: clamp(24px, 4.4vw, 34px);
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--primary-dark);
+      word-break: break-word;
+    }
+
+    .result__food--tip {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+
+    /* ---------- 按钮 ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 50px;
+      padding: 0 26px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn:active { transform: translateY(0) scale(0.98); }
+
+    .btn:focus-visible {
+      outline: 3px solid #ffc9ad;
+      outline-offset: 3px;
+    }
+
+    .btn--primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary) 0%, #ff6f9c 100%);
+      border-color: transparent;
+      box-shadow: 0 12px 24px -12px rgba(255, 111, 100, 0.9);
+      padding: 0 38px;
+    }
+
+    .btn--primary:hover {
+      box-shadow: 0 16px 28px -12px rgba(255, 111, 100, 0.95);
+    }
+
+    .btn--add {
+      flex: none;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      border-color: #ffd9c6;
+    }
+
+    /* ---------- 添加食物 ---------- */
+    .add-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .add-form__input {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 50px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--ink);
+      background: #fffdfb;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .add-form__input::placeholder { color: #c3b6ae; }
+
+    .add-form__input:focus {
+      outline: none;
+      border-color: #ffb894;
+      box-shadow: 0 0 0 4px rgba(255, 138, 91, 0.14);
+    }
+
+    .add-form__input--shake { animation: shake 0.4s ease; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    .hint {
+      margin: 12px 0 0;
+      min-height: 20px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    .hint--ok { color: var(--ok); }
+    .hint--warn { color: var(--warn); }
+
+    /* ---------- 食物列表 ---------- */
+    .food-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .food {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 8px 8px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #fdf7f3;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    /* 只有新添加的食物才播放淡入动画，避免首屏看起来"发虚" */
+    .food--new { animation: fade-in 0.22s ease; }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .food__emoji { font-size: 17px; line-height: 1; }
+
+    .food__name {
+      max-width: 240px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .food__del {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--ink-soft);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .food__del:hover {
+      color: #fff;
+      background: #ff8a8a;
+      border-color: #ff8a8a;
+      transform: rotate(90deg);
+    }
+
+    .food__del:focus-visible {
+      outline: 3px solid #ffc9ad;
+      outline-offset: 2px;
+    }
+
+    .empty-tip {
+      margin: 18px 0 0;
+      padding: 22px 16px;
+      text-align: center;
+      font-size: 14.5px;
+      color: var(--ink-soft);
+      background: #fffaf6;
+      border: 1px dashed #ffd9c6;
+      border-radius: var(--radius-md);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ---------- 小屏适配 ---------- */
+    @media (max-width: 520px) {
+      body { padding: 24px 14px 40px; }
+      .card { padding: 20px 18px; }
+      .add-form { flex-wrap: wrap; }
+      .btn--add { width: 100%; }
+      .result__emoji { font-size: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <p class="app__kicker">🍽️ 选择困难症救星</p>
+      <h1 class="app__title">今天吃什么？</h1>
+      <p class="app__subtitle">纠结的时候，把选择交给一点点运气 😋</p>
+    </header>
+
+    <!-- 抽取结果 -->
+    <section class="card result" aria-labelledby="resultTitle">
+      <h2 id="resultTitle" class="visually-hidden">抽取结果</h2>
+      <div class="result__emoji" id="resultEmoji" aria-hidden="true">🍲</div>
+      <p class="result__label">今 天 就 吃</p>
+      <p class="result__food result__food--tip" id="resultFood" role="status" aria-live="polite">点下面的按钮试试看！</p>
+      <button class="btn btn--primary" id="pickBtn" type="button">🎲 帮我决定</button>
+    </section>
+
+    <!-- 食物清单 -->
+    <section class="card" aria-labelledby="listTitle">
+      <h2 class="card__title" id="listTitle">
+        🍱 我的食物清单
+        <span class="card__count" id="foodCount">8 种</span>
+      </h2>
+
+      <form class="add-form" id="addForm" novalidate>
+        <input
+          class="add-form__input"
+          id="foodInput"
+          type="text"
+          maxlength="12"
+          placeholder="输入想吃的食物，比如：酸菜鱼"
+          autocomplete="off"
+          aria-label="要添加的食物名称">
+        <button class="btn btn--add" id="addBtn" type="submit">➕ 添加食物</button>
+      </form>
+
+      <p class="hint" id="hint" role="status" aria-live="polite"></p>
+
+      <ul class="food-list" id="foodList"></ul>
+      <p class="empty-tip" id="emptyTip" hidden>🍽️ 清单空空的，先添加几种食物吧～</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ====== 数据 ====== */
+
+      // 页面默认提供的食物
+      var DEFAULT_FOODS = ["火锅", "麻辣烫", "炒饭", "饺子", "汉堡", "面条", "烧烤", "寿司"];
+
+      // 常见食物的 Emoji 装饰
+      var EMOJI_MAP = {
+        "火锅": "🍲", "麻辣烫": "🌶️", "炒饭": "🍚", "饺子": "🥟",
+        "汉堡": "🍔", "面条": "🍜", "烧烤": "🍢", "寿司": "🍣",
+        "披萨": "🍕", "炸鸡": "🍗", "拉面": "🍜", "包子": "🥟",
+        "粥": "🥣", "烤肉": "🍖", "沙拉": "🥗", "蛋糕": "🍰",
+        "奶茶": "🧋", "咖啡": "☕", "煎饼": "🥞", "三明治": "🥪",
+        "咖喱": "🍛", "米粉": "🍜", "螺蛳粉": "🍜", "小龙虾": "🦞",
+        "粽子": "🍙", "月饼": "🥮", "甜品": "🍧", "水果": "🍎",
+        "酸菜鱼": "🐟", "牛排": "🥩", "披萨饼": "🍕", "关东煮": "🍢",
+        "炒面": "🍝", "意面": "🍝", "烤鸭": "🦆", "麻辣香锅": "🍲",
+        "蛋炒饭": "🍚", "鸡排": "🍗", "豆浆油条": "🥛"
+      };
+
+      // 自定义食物没有匹配到 Emoji 时，用这组可爱的图案兜底
+      var FALLBACK_EMOJIS = ["🍽️", "🍴", "😋", "🥢", "🍱", "🍙", "🧁", "🍡"];
+
+      /* ====== DOM ====== */
+
+      var els = {
+        resultEmoji: document.getElementById("resultEmoji"),
+        resultFood: document.getElementById("resultFood"),
+        pickBtn: document.getElementById("pickBtn"),
+        addForm: document.getElementById("addForm"),
+        foodInput: document.getElementById("foodInput"),
+        addBtn: document.getElementById("addBtn"),
+        hint: document.getElementById("hint"),
+        foodList: document.getElementById("foodList"),
+        foodCount: document.getElementById("foodCount"),
+        emptyTip: document.getElementById("emptyTip")
+      };
+
+      /* ====== 状态 ====== */
+
+      var foods = [];        // [{ id: number, name: string, emoji: string }]
+      var idSeed = 0;        // 自增 id，保证删除时定位准确
+      var currentFood = "";  // 当前抽到的食物名称
+      var animateIds = {};   // 需要播放淡入动画的食物 id（只记录这次新添加的）
+
+      /* ====== 工具函数 ====== */
+
+      // 根据名称挑选 Emoji：先查表，再按名字稳定地取一个兜底图案
+      function emojiFor(name) {
+        if (Object.prototype.hasOwnProperty.call(EMOJI_MAP, name)) {
+          return EMOJI_MAP[name];
+        }
+        var hash = 0;
+        for (var i = 0; i < name.length; i++) {
+          hash = (hash + name.charCodeAt(i)) % 4096;
+        }
+        return FALLBACK_EMOJIS[hash % FALLBACK_EMOJIS.length];
+      }
+
+      // 在提示行显示一条消息，type 可选 "ok" / "warn"
+      function showHint(message, type) {
+        els.hint.textContent = message;
+        els.hint.className = "hint" + (type ? " hint--" + type : "");
+      }
+
+      // 给输入框加一点"抖动"反馈
+      function shake(input) {
+        input.classList.remove("add-form__input--shake");
+        // 读取一次布局属性，强制动画可以重复触发
+        void input.offsetWidth;
+        input.classList.add("add-form__input--shake");
+      }
+
+      // 结果区恢复成默认的引导文案
+      function resetResult() {
+        currentFood = "";
+        els.resultEmoji.textContent = "🍲";
+        els.resultFood.textContent = "点下面的按钮试试看！";
+        els.resultFood.className = "result__food result__food--tip";
+      }
+
+      /* ====== 渲染 ====== */
+
+      function render() {
+        els.foodList.textContent = "";
+
+        foods.forEach(function (food) {
+          var li = document.createElement("li");
+          li.className = animateIds[food.id] ? "food food--new" : "food";
+
+          var emoji = document.createElement("span");
+          emoji.className = "food__emoji";
+          emoji.setAttribute("aria-hidden", "true");
+          emoji.textContent = food.emoji;
+
+          var name = document.createElement("span");
+          name.className = "food__name";
+          name.textContent = food.name;
+          // 名字过长时会被省略号截断，加 title 让鼠标悬停能看到全名
+          name.title = food.name;
+
+          var del = document.createElement("button");
+          del.type = "button";
+          del.className = "food__del";
+          del.textContent = "✕";
+          del.title = "删除「" + food.name + "」";
+          del.setAttribute("aria-label", "删除「" + food.name + "」");
+          del.addEventListener("click", function () {
+            removeFood(food.id);
+          });
+
+          li.appendChild(emoji);
+          li.appendChild(name);
+          li.appendChild(del);
+          els.foodList.appendChild(li);
+        });
+
+        els.foodCount.textContent = foods.length + " 种";
+        els.emptyTip.hidden = foods.length > 0;
+
+        // 动画只播一次，重绘时不再重复
+        animateIds = {};
+      }
+
+      /* ====== 功能：抽取 ====== */
+
+      function pickFood() {
+        // 列表为空：只提示，不报错
+        if (foods.length === 0) {
+          currentFood = "";
+          els.resultEmoji.textContent = "🥺";
+          els.resultFood.textContent = "清单里还没有食物，请先添加食物";
+          els.resultFood.className = "result__food result__food--tip";
+          showHint("食物列表是空的，先添加几种食物，再来抽吧～", "warn");
+          els.foodInput.focus();
+          return;
+        }
+
+        // 随机挑一个；如果超过一种，尽量不连续抽到同一个
+        var index = Math.floor(Math.random() * foods.length);
+        if (foods.length > 1 && foods[index].name === currentFood) {
+          index = (index + 1 + Math.floor(Math.random() * (foods.length - 1))) % foods.length;
+        }
+
+        var food = foods[index];
+        currentFood = food.name;
+
+        els.resultEmoji.textContent = food.emoji;
+        els.resultFood.textContent = food.name;
+        els.resultFood.className = "result__food";
+
+        // 重播弹跳动画
+        els.resultEmoji.classList.remove("result__emoji--pop");
+        void els.resultEmoji.offsetWidth;
+        els.resultEmoji.classList.add("result__emoji--pop");
+
+        showHint("抽到啦！今天就吃「" + food.name + "」🎉", "ok");
+      }
+
+      /* ====== 功能：添加 ====== */
+
+      function addFood(rawValue) {
+        var name = String(rawValue == null ? "" : rawValue).trim();
+
+        // 空输入：不添加，给出提示
+        if (name === "") {
+          showHint("输入框是空的哦，先写下想吃的食物再添加～", "warn");
+          shake(els.foodInput);
+          els.foodInput.focus();
+          return false;
+        }
+
+        // 去重，避免清单里出现两个一模一样的食物
+        var duplicated = foods.some(function (food) {
+          return food.name === name;
+        });
+        if (duplicated) {
+          showHint("「" + name + "」已经在清单里啦～", "warn");
+          shake(els.foodInput);
+          els.foodInput.select();
+          return false;
+        }
+
+        idSeed += 1;
+        var newFood = { id: idSeed, name: name, emoji: emojiFor(name) };
+        var wasEmpty = foods.length === 0;
+        foods.push(newFood);
+        animateIds[newFood.id] = true;
+
+        render();
+        // 之前清单是空的、结果区还留着"请先添加食物"的提示，加入第一种食物后它已经不成立
+        if (wasEmpty) {
+          resetResult();
+        }
+        els.foodInput.value = "";
+        els.foodInput.focus();
+        showHint("已添加「" + name + "」✅ 现在一共 " + foods.length + " 种", "ok");
+        return true;
+      }
+
+      /* ====== 功能：删除 ====== */
+
+      function removeFood(id) {
+        var index = -1;
+        for (var i = 0; i < foods.length; i++) {
+          if (foods[i].id === id) {
+            index = i;
+            break;
+          }
+        }
+        if (index === -1) {
+          return;
+        }
+
+        var removed = foods.splice(index, 1)[0];
+        render();
+
+        // 如果删掉的正是当前显示的结果，就把结果区恢复成引导文案
+        if (removed.name === currentFood) {
+          resetResult();
+        }
+
+        showHint("已删除「" + removed.name + "」，还剩 " + foods.length + " 种", "ok");
+      }
+
+      /* ====== 事件绑定 ====== */
+
+      // 「帮我决定」
+      els.pickBtn.addEventListener("click", pickFood);
+
+      // 「添加食物」：用表单提交，这样回车键也能添加
+      els.addForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        addFood(els.foodInput.value);
+      });
+
+      // 输入时清掉上一次的警告提示，体验更顺
+      els.foodInput.addEventListener("input", function () {
+        if (els.hint.classList.contains("hint--warn")) {
+          showHint("", "");
+        }
+      });
+
+      /* ====== 初始化 ====== */
+
+      DEFAULT_FOODS.forEach(function (name) {
+        idSeed += 1;
+        foods.push({ id: idSeed, name: name, emoji: emojiFor(name) });
+      });
+
+      render();
+      resetResult();
+      showHint("默认已放好 8 种食物，也可以自己添加～", "");
+    })();
+  </script>
+</body>
+</html>
